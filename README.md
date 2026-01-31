@@ -10,6 +10,4 @@ This is a collection of hands-on implementations and experiments as I learn abou
 
 - **simplenet.py** - Neural network implementations and experiments
 
----
 
-*Note: claude.py is used for code comparison purposes only*
