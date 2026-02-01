@@ -1,18 +1,21 @@
 import numpy as np
 
-target1=5
-target2=9
+y=1
 
 W = {
   "w1": 0.8, "w2": 0.7, "w3": 0.5,
-  "w4": 0.6, "w5": 0.77, "w6": 0.67,
-  "w7": 0.88, "w8": 0.17, "w9": 0.45
+  "w4": 0.6, "w5": 0.77, "w6": 0.67
 }
 
 B= {
-    "b1": 0.1, "b2": 0.1, "b3": 0.1, "b4": 0.1, "b5": 0.1
+    "b1": 0.1, "b2": 0.1, "b3": 0.1, "b4": 0.1
 }
 
+#activation function
+def sigmoid(z):
+    sgd= 1/( 1 + np.exp(-z))
+
+    return sgd
 
 #forward pass
 def forward_pass(W, x,B):
@@ -21,46 +24,43 @@ def forward_pass(W, x,B):
     h2= W["w2"] * x + B["b2"]
     h3= W["w3"] * x + B["b3"]
 
-    y1= ((W["w4"] * h1 ) + (W["w5"] * h2 ) + (W["w6"] * h3)) + B["b4"]
-    y2= ((W["w7"] * h1 ) + (W["w8"] * h2 ) + (W["w9"] * h3)) + B["b5"]
+    a1= sigmoid(h1)
+    a2= sigmoid(h2)
+    a3= sigmoid(h3)
 
-    cache = {"h1": h1, "h2": h2, "h3": h3, "y1": y1, "y2": y2}
+    y1= ((W["w4"] * a1 ) + (W["w5"] * a2 ) + (W["w6"] * a3)) + B["b4"]
+
+    a4= sigmoid(y1)
+
+    cache = {"a1": a1, "a2": a2, "a3": a3, "a4": a4}
 
     return cache
 
 
-def backward_pass(W, cache, x, target1, target2):
+def backward_pass(W, cache, x):
 
-    h1,h2,h3= cache["h1"], cache["h2"], cache["h3"]
-    y1, y2= cache["y1"], cache["y2"]
-
-    dl_dy1= 2 * (y1 - target1)
-    dl_dy2= 2 * (y2 - target2)
+    a1,a2,a3,a4= cache["a1"], cache["a2"], cache["a3"], cache["a4"]
 
     grads= {}
     bgrads= {}
 
     # gradient for 1st layer - w1,w2 and w3
-    grads["w1"]= (dl_dy1 * W["w4"] * x) + (dl_dy2 * W["w7"] * x)
-    grads["w2"]= (dl_dy1 * W["w5"] * x) + (dl_dy2 * W["w8"] * x)
-    grads["w3"]= (dl_dy1 * W["w6"] * x) + (dl_dy2 * W["w9"] * x)
+    grads["w1"]= (a4-y) * W["w4"] * (a1*(1-a1)) * x
+    grads["w2"]= (a4-y) * W["w5"] * (a2*(1-a2)) * x
+    grads["w3"]= (a4-y) * W["w6"] * (a3*(1-a3)) * x
 
     # gradient for output layer- w4,w5,w6,w7,w8,w9
-    grads["w4"]= dl_dy1 * h1
-    grads["w5"]= dl_dy1 * h2
-    grads["w6"]= dl_dy1 * h3
-    grads["w7"]= dl_dy2 * h1
-    grads["w8"]= dl_dy2 * h2
-    grads["w9"]= dl_dy2 * h3
+    grads["w4"]= (a4-y) * a1
+    grads["w5"]= (a4-y) * a2
+    grads["w6"]= (a4-y) * a3
     
     # gradients for biases b1,b2,b3
-    bgrads["b1"]= (dl_dy1 * W["w4"]) + (dl_dy2 * W["w7"])
-    bgrads["b2"]= (dl_dy1 * W["w5"]) + (dl_dy2 * W["w8"])
-    bgrads["b3"]= (dl_dy1 * W["w6"]) + (dl_dy2 * W["w9"])
+    bgrads["b1"]= (a4-y) * W["w4"] * (a1*(1-a1))
+    bgrads["b2"]= (a4-y) * W["w5"] * (a2*(1-a2))
+    bgrads["b3"]= (a4-y) * W["w6"] * (a3*(1-a3))
 
-    #gradients for biases b4 and b5
-    bgrads["b4"]= dl_dy1
-    bgrads["b5"]= dl_dy2
+    #gradients for bias b4(output layer)
+    bgrads["b4"]= (a4-y)
 
     return grads,bgrads
 
@@ -72,28 +72,24 @@ def step(W,B,grads,bgrads, lr):
     for i in B:
         B[i] -= lr * bgrads[i]
 
-x= 1
-lr= 0.001
+x= 2
+lr= 0.01
 
 cache= forward_pass(W,x,B)
-y1,y2= cache["y1"], cache["y2"]
+y_hat= cache["a4"]
 
-loss1= (y1- target1) ** 2 
-loss2= (y2 - target2) ** 2
-loss= loss1 + loss2
+loss= -(y*np.log(y_hat)+ (1-y)*np.log(1-y_hat))
 
 W_old= W.copy()
 B_old= B.copy()
 
-grads,bgrads= backward_pass(W,cache,x, target1, target2)
+grads,bgrads= backward_pass(W,cache,x)
 step(W,B,grads,bgrads,lr)
 
 cache_new= forward_pass(W,x,B)
-newy1,newy2= cache_new["y1"],cache_new["y2"]
+new_yhat = cache_new["a4"]
 
-new_loss1= (newy1 - target1) ** 2
-new_loss2= (newy2 - target2) ** 2
-new_loss= new_loss1 + new_loss2
+new_loss= -(y*np.log(new_yhat)+ (1-y)*np.log(1-new_yhat))
 
 print("old W,B and loss:", W_old,B_old, loss)
 print("new W,B and loss:", W,B, new_loss)
