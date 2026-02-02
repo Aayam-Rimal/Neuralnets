@@ -19,21 +19,20 @@ def sigmoid(z):
 
 #forward pass
 def forward_pass(W, x,B):
-    
-    h1= W["w1"] * x + B["b1"]
-    h2= W["w2"] * x + B["b2"]
-    h3= W["w3"] * x + B["b3"]
+    # for hidden layer 
+    z1= W["w1"] * x + B["b1"]
+    z2= W["w2"] * x + B["b2"]
+    z3= W["w3"] * x + B["b3"]
 
-    a1= sigmoid(h1)
-    a2= sigmoid(h2)
-    a3= sigmoid(h3)
+    a1= sigmoid(z1)
+    a2= sigmoid(z2)
+    a3= sigmoid(z3)
 
-    y1= ((W["w4"] * a1 ) + (W["w5"] * a2 ) + (W["w6"] * a3)) + B["b4"]
-
-    a4= sigmoid(y1)
+    # for output layer
+    z4= ((W["w4"] * a1 ) + (W["w5"] * a2 ) + (W["w6"] * a3)) + B["b4"]
+    a4= sigmoid(z4)
 
     cache = {"a1": a1, "a2": a2, "a3": a3, "a4": a4}
-
     return cache
 
 
@@ -44,12 +43,13 @@ def backward_pass(W, cache, x):
     grads= {}
     bgrads= {}
 
-    # gradient for 1st layer - w1,w2 and w3
+    # gradient for 1st layer - w1,w2 and w3 
+    # path w1-z1-a1-z4-a4-L : derivative backward for gradients. repeat for all Ws
     grads["w1"]= (a4-y) * W["w4"] * (a1*(1-a1)) * x
     grads["w2"]= (a4-y) * W["w5"] * (a2*(1-a2)) * x
     grads["w3"]= (a4-y) * W["w6"] * (a3*(1-a3)) * x
 
-    # gradient for output layer- w4,w5,w6,w7,w8,w9
+    # gradient for output layer- w4,w5,w6 
     grads["w4"]= (a4-y) * a1
     grads["w5"]= (a4-y) * a2
     grads["w6"]= (a4-y) * a3
@@ -78,7 +78,11 @@ lr= 0.01
 cache= forward_pass(W,x,B)
 y_hat= cache["a4"]
 
-loss= -(y*np.log(y_hat)+ (1-y)*np.log(1-y_hat))
+def loss_calc(y,y_hat):
+  loss= -(y*np.log(y_hat)+ (1-y)*np.log(1-y_hat))
+  return loss
+
+old_loss= loss_calc(y,y_hat)
 
 W_old= W.copy()
 B_old= B.copy()
@@ -89,9 +93,9 @@ step(W,B,grads,bgrads,lr)
 cache_new= forward_pass(W,x,B)
 new_yhat = cache_new["a4"]
 
-new_loss= -(y*np.log(new_yhat)+ (1-y)*np.log(1-new_yhat))
+new_loss= loss_calc(y,new_yhat)
 
-print("old W,B and loss:", W_old,B_old, loss)
+print("old W,B and loss:", W_old,B_old, old_loss)
 print("new W,B and loss:", W,B, new_loss)
 
 
