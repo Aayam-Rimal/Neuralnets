@@ -62,13 +62,24 @@ def train(X, Y, n_h, lr=0.1, epochs=5000, batch_size=4, seed=0):
     W1,W2,B1,B2= init_params(n_x,n_h)
 
     for i in range(epochs):
-        A1,A2,Z1,Z2= forward_pass(W1,W2,B1,B2,X)
-        loss= compute_loss(Y,A2)
 
-        dw1,db1,dw2,db2= backward(W1,W2,B1,B2,Z1,X,A1,A2,Y,m)
-        update(W1,W2,B1,B2,dw1,db1,dw2,db2,lr)
+        for start in range(0,m,batch_size):
 
-        print(np.mean(loss))
+            end= start + batch_size
+
+            X_batch= X[:, start:end]
+            Y_batch= Y[:, start:end]
+
+            A1,A2,Z1,Z2= forward_pass(W1,W2,B1,B2,X_batch)
+            loss= compute_loss(Y_batch,A2)
+
+            m_batch= X_batch.shape[1]
+
+            dw1,db1,dw2,db2= backward(W1,W2,B1,B2,Z1,X_batch,A1,A2,Y_batch,m_batch)
+            update(W1,W2,B1,B2,dw1,db1,dw2,db2,lr)
+
+            print(f"epoch {i}, batch {start//batch_size}: {np.mean(loss)}")
+
 
 X= np.random.randn(10,4)
 Y= np.array([1,0,0,1]).reshape(1,4)
@@ -77,7 +88,7 @@ m= X.shape[1]
 
 
 
-train(X, Y, 6, lr=0.1, epochs=5000, batch_size=4, seed=0)
+train(X, Y, 6, lr=0.1, epochs=5000, batch_size=2, seed=0)
 
         
 
